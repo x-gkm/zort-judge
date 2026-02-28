@@ -47,6 +47,21 @@ Response:
 }
 ```
 
+GET /problems
+Response:
+```json
+[
+    {
+        "id": 123,
+        "name": "Add two numbers"
+    },
+    {
+        "id": 456,
+        "name": "Subtract two numbers"
+    }
+]
+```
+
 GET /problems/{id}
 Response:
 ```json
