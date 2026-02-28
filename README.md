@@ -47,7 +47,7 @@ Response:
 }
 ```
 
-GET /contests/{id}/{problem_id}
+GET /problems/{id}
 Response:
 ```json
 {
@@ -57,7 +57,7 @@ Response:
 }
 ```
 
-POST /contests/{id}/{problem_id}/
+POST /problems/{id}/
 Request:
 ```json
 {
