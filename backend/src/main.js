@@ -1,80 +1,15 @@
 import "dotenv/config";
 import express from "express";
-import argon2 from "argon2";
-import pg from "pg";
-
-const pool = new pg.Pool({
-    connectionString: process.env["DATABASE_URL"],
-});
+import { pool } from "./db.js";
+import auth from "./auth.js"
+import { bodyValues, pagination  } from "./middleware.js";
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-function bodyValues(...values) {
-    return (req, res, next) => {
-        const missing = values.filter(value => typeof req.body?.[value] === "undefined");
-        if (missing.length > 0) {
-            throw new Error(`Missing body fields: ${missing.join(", ")}`);
-        }
-        next();
-    }
-}
-
-function parseNumber(n) {
-    if (n === "") {
-        return NaN;
-    }
-    return Number(n);
-}
-
-function pagination(req, res, next) {
-    let limit = parseNumber(req.query["limit"]);
-
-    if (isNaN(limit) || limit <= 0 || limit > 10) {
-        limit = 10;
-    }
-
-    let after = String(req.query["after"] ?? "").trim();
-
-    if (after === "") {
-        after = undefined;
-    }
-
-    req.pagination = { limit, after };
-    next()
-}
-
-app.post("/register", bodyValues("username", "password", "email"), async (req, res) => {
-    const username = String(req.body["username"]).trim();
-    const email = String(req.body["email"]).trim();
-    const password = await argon2.hash(String(req.body["password"]));
-
-    await pool.query("INSERT INTO users (username, email, password) VALUES ($1, $2, $3)", [username, email, password]);
-
-    res.end();
-});
-
-app.post("/login", bodyValues("username", "password"), async (req, res) => {
-    const username = String(req.body["username"]).trim();
-    const password = String(req.body["password"]);
-
-    const passwordHash = (await pool.query("SELECT password FROM users WHERE username = $1", [username])).rows?.[0]?.["password"];
-
-    if (typeof passwordHash === "undefined" || !await argon2.verify(passwordHash, password)) {
-        res.sendStatus(401 /* Unauthorized */);
-        return;
-    }
-
-    if (await argon2.needsRehash(passwordHash)) {
-        const rehashed = await argon2.hash(password);
-        await pool.query("UPDATE users SET password = $1 WHERE username = $2", [rehashed, username]);
-    }
-
-    // TODO(gkm): Set a session cookie.
-    res.end();
-});
+app.use(auth)
 
 app.get("/contests", pagination, async (req, res) => {
     res.send((await pool.query("SELECT id, name FROM contests WHERE id > $1 ORDER BY id LIMIT $2", [req.pagination.after ?? -1, req.pagination.limit])).rows);
