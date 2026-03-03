@@ -22,6 +22,30 @@ function bodyValues(...values) {
     }
 }
 
+function parseNumber(n) {
+    if (n === "") {
+        return NaN;
+    }
+    return Number(n);
+}
+
+function pagination(req, res, next) {
+    let limit = parseNumber(req.query["limit"]);
+
+    if (isNaN(limit) || limit <= 0 || limit > 10) {
+        limit = 10;
+    }
+
+    let after = String(req.query["after"] ?? "").trim();
+
+    if (after === "") {
+        after = undefined;
+    }
+
+    req.pagination = { limit, after };
+    next()
+}
+
 app.post("/register", bodyValues("username", "password", "email"), async (req, res) => {
     const username = String(req.body["username"]).trim();
     const email = String(req.body["email"]).trim();
@@ -52,9 +76,8 @@ app.post("/login", bodyValues("username", "password"), async (req, res) => {
     res.end();
 });
 
-// TODO(gkm): Implement pagination.
-app.get("/contests", async (req, res) => {
-    res.send((await pool.query("SELECT id, name FROM contests ORDER BY start_date DESC")).rows);
+app.get("/contests", pagination, async (req, res) => {
+    res.send((await pool.query("SELECT id, name FROM contests WHERE id > $1 ORDER BY id LIMIT $2", [req.pagination.after ?? -1, req.pagination.limit])).rows);
 });
 
 app.get("/contests/:id", async (req, res) => {
@@ -76,9 +99,8 @@ app.get("/contests/:id", async (req, res) => {
     });
 })
 
-// TODO(gkm): Implement pagination.
-app.get("/problems", async (req, res) => {
-    res.send((await pool.query("SELECT id, name from problems")).rows);
+app.get("/problems", pagination, async (req, res) => {
+    res.send((await pool.query("SELECT id, name from problems WHERE id > $1 ORDER BY id LIMIT $2", [req.pagination.after, req.pagination.limit])).rows);
 });
 
 app.route("/problems/:id")

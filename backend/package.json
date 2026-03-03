@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "0.1.0",
   "description": "",
-  "main": "main.mjs",
+  "main": "src/main.js",
   "scripts": {
     "start": "node .",
     "migrate": "node-pg-migrate"
