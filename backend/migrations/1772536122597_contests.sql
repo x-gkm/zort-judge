@@ -1,6 +1,10 @@
+-- Up Migration
 CREATE TABLE contests (
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
     start_date TIMESTAMP WITH TIME ZONE NOT NULL,
     end_date TIMESTAMP WITH TIME ZONE NOT NULL
 );
+
+-- Down Migration
+DROP TABLE contests;

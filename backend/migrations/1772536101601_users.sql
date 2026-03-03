@@ -1,0 +1,10 @@
+-- Up Migration
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR NOT NULL UNIQUE,
+    email VARCHAR NOT NULL,
+    password VARCHAR NOT NULL
+);
+
+-- Down Migration
+DROP TABLE users;
