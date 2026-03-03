@@ -1,8 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import { pool } from "./db.js";
-import auth from "./auth.js"
-import { bodyValues, pagination  } from "./middleware.js";
+import auth from "./auth.js";
+import { bodyValues, pagination } from "./middleware.js";
 
 const app = express();
 
@@ -41,7 +41,7 @@ app.get("/problems", pagination, async (req, res) => {
 app.route("/problems/:id")
     .get(async (req, res) => {
         const problem = (await pool.query("SELECT * from problems WHERE id = $1", [req.params["id"]])).rows?.[0];
-        
+
         if (typeof problem === "undefined") {
             res.sendStatus(404 /* Not found */)
             return;
