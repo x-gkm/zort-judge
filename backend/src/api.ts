@@ -6,7 +6,14 @@ const router = express.Router();
 export default router;
 
 router.get("/contests", pagination, async (req, res) => {
-    res.send((await pool.query("SELECT id, name FROM contests WHERE id > $1 ORDER BY id LIMIT $2", [req.pagination.after ?? -1, req.pagination.limit])).rows);
+    const { limit, after } = req.pagination;
+    const query = after !== undefined
+        ? "SELECT id, name FROM contests WHERE id > $2 ORDER BY id LIMIT $1"
+        : "SELECT id, name FROM contests ORDER BY id LIMIT $1";
+
+    const { rows } = await pool.query(query, [limit, after]);
+
+    res.send(rows);
 });
 
 router.get("/contests/:id", async (req, res) => {
@@ -29,7 +36,14 @@ router.get("/contests/:id", async (req, res) => {
 })
 
 router.get("/problems", pagination, async (req, res) => {
-    res.send((await pool.query("SELECT id, name from problems WHERE id > $1 ORDER BY id LIMIT $2", [req.pagination.after, req.pagination.limit])).rows);
+    const { limit, after } = req.pagination;
+    const query = after !== undefined
+        ? "SELECT id, name from problems WHERE id > $2 ORDER BY id LIMIT $1"
+        : "SELECT id, name from problems ORDER BY id LIMIT $1";
+    
+    const { rows } = await pool.query(query, [limit, after]);
+
+    res.send(rows);
 });
 
 router.route("/problems/:id")
