@@ -69,8 +69,7 @@ router.route("/problems/:id")
     })
     .post(loggedIn, bodyValues("code", "language"), async (req, res) => {
         const problemID = req.params["id"];
-        // FIXME(gkm): Store the user id in the session as well and get rid of this query.
-        const userID = (await pool.query("SELECT id FROM users WHERE username = $1", [req.session!.username])).rows?.[0]?.["id"];
+        const userID = req.session!.user.id;
 
         await pool.query(
             "INSERT INTO submissions (problem_id, user_id, code, language) VALUES ($1, $2, $3, $4)",
@@ -80,17 +79,16 @@ router.route("/problems/:id")
     });
 
 router.get("/submissions", loggedIn, pagination, async (req, res) => {
-    // FIXME(gkm): Store the user id in the session as well and get rid of this query.
-    const id = (await pool.query("SELECT id FROM users WHERE username = $1", [req.session!.username])).rows?.[0]?.["id"];
+    const userID = req.session!.user.id;
 
     const { limit, after } = req.pagination;
     let query, params;
     if (after !== undefined) {
         query = "SELECT * from submissions WHERE user_id = $1 AND id > $3 ORDER BY id LIMIT $2"
-        params = [id, limit, after];
+        params = [userID, limit, after];
     } else {
         query = "SELECT * from submissions WHERE user_id = $1 ORDER BY id LIMIT $2";
-        params = [id, limit];
+        params = [userID, limit];
     }
 
     const { rows } = await pool.query(query, params);

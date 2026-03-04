@@ -44,7 +44,7 @@ export function pagination(req: Request, res: Response, next: NextFunction) {
 }
 
 export function loggedIn(req: Request, res: Response, next: NextFunction) {
-    if (req.session?.username == null) {
+    if (req.session?.user?.name == null) {
         res.sendStatus(401 /* Unauthorized */);
         return;
     }

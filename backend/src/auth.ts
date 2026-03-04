@@ -20,7 +20,8 @@ router.post("/login", bodyValues("username", "password"), async (req, res) => {
     const username = String(req.body["username"]).trim();
     const password = String(req.body["password"]);
 
-    const passwordHash = (await pool.query("SELECT password FROM users WHERE username = $1", [username])).rows?.[0]?.["password"];
+    const record = (await pool.query("SELECT id, password FROM users WHERE username = $1", [username])).rows?.[0];
+    const passwordHash = record?.["password"];
 
     if (typeof passwordHash === "undefined" || !await argon2.verify(passwordHash, password)) {
         res.sendStatus(401 /* Unauthorized */);
@@ -32,6 +33,11 @@ router.post("/login", bodyValues("username", "password"), async (req, res) => {
         await pool.query("UPDATE users SET password = $1 WHERE username = $2", [rehashed, username]);
     }
 
-    req.session = { username };
+    req.session = {
+        user: {
+            id: record["user_id"],
+            name: username,
+        },
+    };
     res.end();
 });
