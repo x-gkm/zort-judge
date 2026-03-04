@@ -42,3 +42,12 @@ export function pagination(req: Request, res: Response, next: NextFunction) {
     req.pagination = { limit, after };
     next()
 }
+
+export function loggedIn(req: Request, res: Response, next: NextFunction) {
+    if (req.session?.username == null) {
+        res.sendStatus(401 /* Unauthorized */);
+        return;
+    }
+
+    next()
+}

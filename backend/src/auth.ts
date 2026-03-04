@@ -32,6 +32,6 @@ router.post("/login", bodyValues("username", "password"), async (req, res) => {
         await pool.query("UPDATE users SET password = $1 WHERE username = $2", [rehashed, username]);
     }
 
-    // TODO(gkm): Set a session cookie.
+    req.session = { username };
     res.end();
 });

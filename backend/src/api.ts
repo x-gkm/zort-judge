@@ -1,5 +1,5 @@
 import express from "express";
-import { bodyValues, pagination } from "./middleware.js";
+import { bodyValues, loggedIn, pagination } from "./middleware.js";
 import { pool } from "./db.js";
 
 const router = express.Router();
@@ -40,7 +40,7 @@ router.get("/problems", pagination, async (req, res) => {
     const query = after !== undefined
         ? "SELECT id, name from problems WHERE id > $2 ORDER BY id LIMIT $1"
         : "SELECT id, name from problems ORDER BY id LIMIT $1";
-    
+
     const { rows } = await pool.query(query, [limit, after]);
 
     res.send(rows);
@@ -62,7 +62,16 @@ router.route("/problems/:id")
         res.sendStatus(201 /* Created */);
     });
 
-// TODO(gkm): Get the current users submissions instead of all submissions.
-router.get("/submissions", async (req, res) => {
-    res.send((await pool.query("SELECT * from submissions")).rows);
+router.get("/submissions", loggedIn, pagination, async (req, res) => {
+    // FIXME(gkm): Store the user id in the session as well and get rid of this query.
+    const id = (await pool.query("SELECT id FROM users WHERE username = $1", [req.session!.username])).rows?.[0]?.["id"];
+
+    const { limit, after } = req.pagination;
+    const query = after !== undefined
+        ? "SELECT * from submissions WHERE user_id = $1 AND id > $3 ORDER BY id LIMIT $2"
+        : "SELECT * from submissions WHERE user_id = $1 ORDER BY id LIMIT $2";
+
+    const { rows } = await pool.query(query, [id, limit, after]);
+
+    res.send(rows);
 })
