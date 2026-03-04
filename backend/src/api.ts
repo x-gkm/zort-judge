@@ -7,11 +7,16 @@ export default router;
 
 router.get("/contests", pagination, async (req, res) => {
     const { limit, after } = req.pagination;
-    const query = after !== undefined
-        ? "SELECT id, name FROM contests WHERE id > $2 ORDER BY id LIMIT $1"
-        : "SELECT id, name FROM contests ORDER BY id LIMIT $1";
+    let query, params;
+    if (after !== undefined) {
+        query = "SELECT id, name FROM contests WHERE id > $2 ORDER BY id LIMIT $1";
+        params = [after, limit];
+    } else {
+        query = "SELECT id, name FROM contests ORDER BY id LIMIT $1";
+        params = [limit];
+    }
 
-    const { rows } = await pool.query(query, [limit, after]);
+    const { rows } = await pool.query(query, params);
 
     res.send(rows);
 });
@@ -37,11 +42,16 @@ router.get("/contests/:id", async (req, res) => {
 
 router.get("/problems", pagination, async (req, res) => {
     const { limit, after } = req.pagination;
-    const query = after !== undefined
-        ? "SELECT id, name from problems WHERE id > $2 ORDER BY id LIMIT $1"
-        : "SELECT id, name from problems ORDER BY id LIMIT $1";
+    let query, params;
+    if (after !== undefined) {
+        query = "SELECT id, name from problems WHERE id > $2 ORDER BY id LIMIT $1";
+        params = [limit, after];
+    } else {
+        query = "SELECT id, name from problems ORDER BY id LIMIT $1";
+        params = [limit];
+    }
 
-    const { rows } = await pool.query(query, [limit, after]);
+    const { rows } = await pool.query(query, params);
 
     res.send(rows);
 });
@@ -67,11 +77,16 @@ router.get("/submissions", loggedIn, pagination, async (req, res) => {
     const id = (await pool.query("SELECT id FROM users WHERE username = $1", [req.session!.username])).rows?.[0]?.["id"];
 
     const { limit, after } = req.pagination;
-    const query = after !== undefined
-        ? "SELECT * from submissions WHERE user_id = $1 AND id > $3 ORDER BY id LIMIT $2"
-        : "SELECT * from submissions WHERE user_id = $1 ORDER BY id LIMIT $2";
+    let query, params;
+    if (after !== undefined) {
+        query = "SELECT * from submissions WHERE user_id = $1 AND id > $3 ORDER BY id LIMIT $2"
+        params = [id, limit, after];
+    } else {
+        query = "SELECT * from submissions WHERE user_id = $1 ORDER BY id LIMIT $2";
+        params = [id, limit];
+    }
 
-    const { rows } = await pool.query(query, [id, limit, after]);
+    const { rows } = await pool.query(query, params);
 
     res.send(rows);
 })
