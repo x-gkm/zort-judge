@@ -67,8 +67,15 @@ router.route("/problems/:id")
 
         res.send(problem);
     })
-    .post(bodyValues("code", "language"), async (req, res) => {
-        await pool.query("INSERT INTO submissions (code, language) VALUES ($1, $2)", [req.body["code"], req.body["language"]]);
+    .post(loggedIn, bodyValues("code", "language"), async (req, res) => {
+        const problemID = req.params["id"];
+        // FIXME(gkm): Store the user id in the session as well and get rid of this query.
+        const userID = (await pool.query("SELECT id FROM users WHERE username = $1", [req.session!.username])).rows?.[0]?.["id"];
+
+        await pool.query(
+            "INSERT INTO submissions (problem_id, user_id, code, language) VALUES ($1, $2, $3, $4)",
+            [problemID, userID, req.body["code"], req.body["language"]]
+        );
         res.sendStatus(201 /* Created */);
     });
 
